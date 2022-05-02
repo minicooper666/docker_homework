@@ -1,0 +1,11 @@
+FROM python:3.8-alpine
+WORKDIR /app
+
+COPY lib_catalog/requirements.txt .
+RUN apk add --no-cache libxml2 libxslt libxml2-dev libxslt-dev postgresql-libs && \
+    apk add --no-cache --virtual .build-deps gcc musl-dev postgresql-dev && \
+    pip install -r requirements.txt --no-cache-dir && \
+    apk --purge del .build-deps
+
+COPY lib_catalog .
+CMD ["python", "manage.py", "runserver", "0.0.0.0:8000"]
