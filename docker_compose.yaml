@@ -1,0 +1,61 @@
+version: '2'
+
+services:
+  front:
+    image: front
+    container_name: front
+    restart: "unless-stopped"
+    build:
+      context: .
+      dockerfile: Dockerfile-multistage
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+    ports:
+      - 8085:80
+    networks:
+      - frontend_net
+
+  back:
+    image: back
+    container_name: back
+    restart: "unless-stopped"
+    build:
+      context: .
+      dockerfile: Dockerfile-backend
+    ports:
+      - 8000:8000
+    networks:
+      - backend_net
+    depends_on:
+      - database
+
+  database:
+    image: postgres:14-alpine
+    container_name: database
+    restart: "unless-stopped"
+    environment:
+      - POSTGRES_USER=django
+      - POSTGRES_PASSWORD=django
+      - POSTGRES_DB=django
+      - PGDATA=/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U django"]
+      interval: 10s
+      timeout: 10s
+      retries: 5
+    volumes:
+      - postgres:/var/lib/postgresql/data
+    networks:
+      - backend_net
+
+networks:
+  frontend_net:
+    driver: bridge
+  backend_net:
+    driver: bridge
+
+volumes:
+  postgres:
